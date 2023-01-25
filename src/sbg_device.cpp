@@ -216,6 +216,91 @@ void SbgDevice::configure(void)
   }
 }
 
+bool SbgDevice::readDeviceConfig(void)
+{
+    ConfigGetter configGetter(m_com_handle_, m_device_configuration);
+    try{
+        configGetter.getConfiguration();
+        return true;
+    }
+    catch(rclcpp::exceptions::RCLError &) {
+        RCLCPP_ERROR(m_ref_node_.get_logger(), "SBG DRIVER [Read configuration] - Unable to read the device's config");
+        return false;
+    }
+    catch (std::exception &e) {
+        RCLCPP_ERROR(m_ref_node_.get_logger(), "Exception caught while reading device config : %s", e.what());
+        return false;
+    }
+    return false;
+}
+
+ostringstream SbgDevice::displayDeviceConfig(void)
+{
+    ostringstream device_config_str;
+    device_config_str << "\n==== SBG device configuration ====\n\n";
+    device_config_str << "sensor parameters:\n";
+    device_config_str << "\tinitial position:\n";
+    device_config_str << "\t\tlatitude: " << m_device_configuration.initConditionConf.latitude << "\n";
+    device_config_str << "\t\tlongitude: " << to_string(m_device_configuration.initConditionConf.longitude) << "\n";
+    device_config_str << "\t\taltitude: " << to_string(m_device_configuration.initConditionConf.altitude) << "\n";
+    device_config_str << "\tinitial date:\n";
+    device_config_str << "\t\tday: " << to_string(m_device_configuration.initConditionConf.day) << "\n";
+    device_config_str << "\t\tmonth: " << to_string(m_device_configuration.initConditionConf.month) << "\n";
+    device_config_str << "\t\tday: " << to_string(m_device_configuration.initConditionConf.year) << "\n";
+    device_config_str << "\tmotion profile: " << m_device_configuration.motionProfile.id << "\n";
+    device_config_str << "sensor alignement:\n";
+    device_config_str << "\timu x axis direction: " << m_device_configuration.sensorAlignmentInfo.axisDirectionX << "\n";
+    device_config_str << "\timu y axis direction: " << m_device_configuration.sensorAlignmentInfo.axisDirectionY << "\n";
+    device_config_str << "\timu misalignment roll: " << m_device_configuration.sensorAlignmentInfo.misRoll << "\n";
+    device_config_str << "\timu misalignment pitch: " << m_device_configuration.sensorAlignmentInfo.misPitch << "\n";
+    device_config_str << "\timu misalignment yaw: " << m_device_configuration.sensorAlignmentInfo.misYaw << "\n";
+    device_config_str << "\timu lever arm X: " << m_device_configuration.imu_level_arms(0) << "\n";
+    device_config_str << "\timu lever arm Y: " << m_device_configuration.imu_level_arms(1) << "\n";
+    device_config_str << "\timu lever arm Z: " << m_device_configuration.imu_level_arms(2) << "\n";
+    device_config_str << "aiding assignement:\n";
+    device_config_str << "\tGNSS1 port: " << m_device_configuration.aidingAssignConf.gps1Port << "\n";
+    device_config_str << "\tGNSS1 sync: " << m_device_configuration.aidingAssignConf.gps1Sync << "\n";
+    device_config_str << "\tRTCM port: " << m_device_configuration.aidingAssignConf.rtcmPort << "\n";
+    device_config_str << "\todometer pin: " << m_device_configuration.aidingAssignConf.odometerPinsConf << "\n";
+    // TODO display magnetometer config
+    device_config_str << "gnss:\n";
+    device_config_str << "\tmodel id: " << m_device_configuration.gnssModelInfo.id << "\n";
+    device_config_str << "\tprimary lever arm X: " << m_device_configuration.gnssInstallation.leverArmPrimary[0] << "\n";
+    device_config_str << "\tprimary lever arm Y: " << m_device_configuration.gnssInstallation.leverArmPrimary[1] << "\n";
+    device_config_str << "\tprimary lever arm Z: " << m_device_configuration.gnssInstallation.leverArmPrimary[2] << "\n";
+    device_config_str << "\tprimary lever arm precise: " << m_device_configuration.gnssInstallation.leverArmPrimaryPrecise << "\n";
+    device_config_str << "\tsecondary lever arm X: " << m_device_configuration.gnssInstallation.leverArmSecondary[0] << "\n";
+    device_config_str << "\tsecondary lever arm Y: " << m_device_configuration.gnssInstallation.leverArmSecondary[1] << "\n";
+    device_config_str << "\tsecondary lever arm Z: " << m_device_configuration.gnssInstallation.leverArmSecondary[2] << "\n";
+    device_config_str << "\tsecondary lever arm mode: " << to_string(m_device_configuration.gnssInstallation.leverArmSecondaryMode) << "\n";
+    device_config_str << "\tposition rejection mode: " << m_device_configuration.gnssRejectionMode.position << "\n";
+    device_config_str << "\tvelocity rejection mode: " << m_device_configuration.gnssRejectionMode.velocity << "\n";
+    device_config_str << "\ttrue heading rejection mode: " << m_device_configuration.gnssRejectionMode.hdt << "\n";
+    device_config_str << "odometer:\n";
+    device_config_str << "\tgain: " << m_device_configuration.odometerConf.gain << "\n";
+    device_config_str << "\tgain_error: " << m_device_configuration.odometerConf.gainError << "\n";
+    device_config_str << "\treverse mode: " << m_device_configuration.odometerConf.reverseMode << "\n";
+    device_config_str << "\tlever arm X: " << m_device_configuration.odometerLevelArms(0) << "\n";
+    device_config_str << "\tlever arm Y: " << m_device_configuration.odometerLevelArms(1) << "\n";
+    device_config_str << "\tlever arm Z: " << m_device_configuration.odometerLevelArms(2) << "\n";
+    device_config_str << "\trejection mode: " << m_device_configuration.odometerRejectionMode.velocity << "\n";
+    std::cout << device_config_str.str() << std::endl;
+    return device_config_str;
+}
+
+
+void SbgDevice::exportDeviceConfig(void)
+{
+    readDeviceConfig();
+    auto device_config = displayDeviceConfig();
+    string output_filename;
+    output_filename = "device_configuration_" + timeToStr()/*(nullptrrclcpp::WallTimer::now())*/ + ".txt";
+    ofstream f(output_filename);
+    f << device_config.str();
+    f.close();
+    RCLCPP_INFO(m_ref_node_.get_logger(), "SBG DRIVER [Read config] - Device configuration saved to file %s", output_filename.c_str());
+}
+
 bool SbgDevice::processMagCalibration(const std::shared_ptr<std_srvs::srv::Trigger::Request> ref_ros_request, std::shared_ptr<std_srvs::srv::Trigger::Response> ref_ros_response)
 {
   SBG_UNUSED_PARAMETER(ref_ros_request);
@@ -476,6 +561,11 @@ void SbgDevice::initDeviceForReceivingData(void)
   {
     rclcpp::exceptions::throw_from_rcl_error(RCL_RET_ERROR, "SBG_DRIVER - [Init] Unable to set the callback function - " + std::string(sbgErrorCodeToString(error_code)));
   }
+}
+
+void SbgDevice::initDeviceForReadingConfig(void)
+{
+    exportDeviceConfig();
 }
 
 void SbgDevice::initDeviceForMagCalibration(void)

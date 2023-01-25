@@ -100,6 +100,7 @@ set (SBG_COMMON_RESOURCES
   src/message_publisher.cpp
   src/message_wrapper.cpp
   src/config_store.cpp
+  src/config_getter.cpp
   src/sbg_device.cpp
 )
 
@@ -112,18 +113,26 @@ add_executable(sbg_device_mag ${SBG_COMMON_RESOURCES} src/main_mag.cpp)
 add_dependencies(sbg_device_mag ${PROJECT_NAME})
 target_compile_options(sbg_device_mag PRIVATE -Wall -Wextra)
 
+add_executable(sbg_device_read_config ${SBG_COMMON_RESOURCES} src/main_read_config.cpp)
+add_dependencies(sbg_device_read_config ${PROJECT_NAME})
+target_compile_options(sbg_device_read_config PRIVATE -Wall -Wextra)
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(sbg_device ${catkin_LIBRARIES} sbgECom)
 target_link_libraries(sbg_device_mag ${catkin_LIBRARIES} sbgECom)
+target_link_libraries(sbg_device_read_config ${catkin_LIBRARIES} sbgECom)
 
 ament_target_dependencies(sbg_device ${USED_LIBRARIES}) 
 ament_target_dependencies(sbg_device_mag ${USED_LIBRARIES})
+ament_target_dependencies(sbg_device_read_config ${USED_LIBRARIES})
 
 rosidl_target_interfaces(sbg_device ${PROJECT_NAME} "rosidl_typesupport_cpp")
 rosidl_target_interfaces(sbg_device_mag ${PROJECT_NAME} "rosidl_typesupport_cpp")
+rosidl_target_interfaces(sbg_device_read_config ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 set_property(TARGET sbg_device PROPERTY CXX_STANDARD 14)
 set_property(TARGET sbg_device_mag PROPERTY CXX_STANDARD 14)
+set_property(TARGET sbg_device_read_config PROPERTY CXX_STANDARD 14)
 
 #############
 ## Install ##
@@ -133,7 +142,7 @@ set_property(TARGET sbg_device_mag PROPERTY CXX_STANDARD 14)
 # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
 ## Mark executables and/or libraries for installation
-install(TARGETS sbg_device sbg_device_mag
+install(TARGETS sbg_device sbg_device_mag sbg_device_read_config
    DESTINATION lib/${PROJECT_NAME}
 )
 

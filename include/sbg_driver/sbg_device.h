@@ -9,14 +9,17 @@
 // ROS headers
 #include <std_srvs/srv/set_bool.hpp>
 #include <std_srvs/srv/trigger.hpp>
+#include "rclcpp/exceptions.hpp"
 
 // Project headers
 #include <config_applier.h>
 #include <config_store.h>
+#include <config_getter.h>
 #include <message_publisher.h>
 
 namespace sbg
 {
+
 /*!
  * Class to handle a connected SBG device.
  */
@@ -43,13 +46,16 @@ private:
   MessagePublisher        m_message_publisher_;
   ConfigStore             m_config_store_;
 
+  SbgDeviceConfiguration  m_device_configuration;
+
   uint32_t                m_rate_frequency_;
 
   bool                    m_mag_calibration_ongoing_;
   bool                    m_mag_calibration_done_;
   SbgEComMagCalibResults  m_magCalibResults;
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr    m_calib_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr      m_calib_service_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr      m_calib_save_service_;
+
 
   //---------------------------------------------------------------------//
   //- Private  methods                                                  -//
@@ -116,6 +122,23 @@ private:
    * \throw                       Unable to configure the connected device.
    */
   void configure(void);
+
+  /*!
+   * Read the device configuration
+   *
+   * \return                      True if the configuration was read successfully
+   */
+  bool readDeviceConfig(void);
+
+  /*!
+   * Display the device configuration
+   */
+  std::ostringstream displayDeviceConfig(void);
+
+  /*!
+   * Export the device's configuration to a file.
+   */
+  void exportDeviceConfig(void);
 
   /*!
    * Process the magnetometer calibration.
@@ -205,6 +228,13 @@ public:
    * \throw                       Unable to initialize the SBG device.
    */
   void initDeviceForReceivingData(void);
+
+  /*!
+   * Initialise the device for reading the device's configuration.
+   *
+   * \throw                       Unable to initialize the SBG dev
+   */
+  void initDeviceForReadingConfig(void);
 
   /*!
    * Initialize the device for magnetometers calibration.
